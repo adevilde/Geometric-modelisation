@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.tri as mtri
 
 def generate_surface(subdivisions):
     # Création d'une grille initiale
@@ -13,36 +13,31 @@ def generate_surface(subdivisions):
         for col in range(grid_size):
             x = col * step_size
             y = row * step_size
-            z = np.sin(x*y)
+            z = np.sin(x * np.pi) * np.cos(y * np.pi)  # Exemple de fonction de surface
             vertices[row, col] = np.array([x, y, z])
 
-    # Génération des triangles pour chaque patch
-    triangles = []
-    for row in range(subdivisions):
-        for col in range(subdivisions):
-            top_left = row * grid_size + col
-            top_right = top_left + 1
-            bottom_left = (row + 1) * grid_size + col
-            bottom_right = bottom_left + 1
-
-            # Triangle supérieur gauche
-            triangles.extend([top_left, bottom_left, top_right])
-
-            # Triangle inférieur droit
-            triangles.extend([top_right, bottom_left, bottom_right])
-
-    return vertices.reshape((-1, 3)), np.array(triangles, dtype=np.uint32)
+    return vertices.reshape((-1, 3))
 
 
-# Exemple d'utilisation
-subdivisions = 8
-vertices, triangles = generate_surface(subdivisions)
+def triangulate(subdivisions):
+    vertices = generate_surface(subdivisions)
+    x = vertices[:, 0]
+    y = vertices[:, 1]
+    z = vertices[:, 2]
+    triang = mtri.Triangulation(x, y)
+    return triang, z
 
-# Affichage des sommets et des triangles
+# Exemple d'utilisation de la fonction triangulate
+subdivisions = 20
+
+# Triangularisation
+triang, z = triangulate(subdivisions)
+
+# Affichage de la surface triangulée en 3D
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-ax.plot_trisurf(vertices[:, 0], vertices[:, 2], vertices[:, 1], triangles=triangles)
+ax.plot_trisurf(triang, z)
 ax.set_xlabel('X')
-ax.set_ylabel('Z')
-ax.set_zlabel('Y')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 plt.show()
