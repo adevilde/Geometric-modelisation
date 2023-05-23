@@ -23,3 +23,23 @@ ax = plt.figure().add_subplot(projection='3d')
 ax.plot_trisurf(x, y, z, linewidth=0.2, antialiased=True)
 
 plt.show()
+
+
+
+
+def init_boule(k):
+
+    # domain parametrization
+    U = np.linspace(0, 2 * np.pi, k)
+    V = np.linspace(0, np.pi, k)
+    [X, Y] = np.meshgrid(U, V)
+
+    # sphere parametrization
+    S1 = np.cos(X) * np.sin(Y)
+    S2 = np.sin(X) * np.sin(Y)
+    S3 = np.cos(Y)
+
+    # triangulate the points in [0,2pi] x [0,pi]
+    tri = Delaunay(np.array([X.flatten(), Y.flatten()]).T)
+
+    return S1.flatten(), S2.flatten(), S3.flatten(), tri.simplices

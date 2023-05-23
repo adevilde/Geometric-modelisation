@@ -78,3 +78,6 @@ ax.plot_trisurf(triang, z, cmap=plt.cm.CMRmap)
 
 
 plt.show()
+
+
+

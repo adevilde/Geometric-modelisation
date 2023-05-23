@@ -1,6 +1,8 @@
 import numpy as np
+from matplotlib import cm
 import matplotlib.pyplot as plt
 import matplotlib.tri as mtri
+from scipy.spatial import Delaunay
 
 size = 6
 w = 1/16
@@ -31,7 +33,8 @@ def init_volume():
         ])
     return x, y, z, tri
 
-def init_cube():
+
+def init_cube_KO():
     # Définition des points du cube
     points = np.array([
         [0.0, 0.0, 0.0],
@@ -58,6 +61,24 @@ def init_cube():
     ])
     return x, y, z, tri
 
+def init_cube_OK():
+
+    # Définition des points du cube
+    x = np.array([0.0, 2.0, 0.0, 2.0, 0.0, 2.0, 0.0, 2.0, 1.0, 2.0, 1.0, 0.0, 1.0, 1.0])
+    y = np.array([0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 0.0, 1.0, 2.0, 1.0, 1.0, 1.0])
+    Z = np.array([2.0, 2.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 2.0])
+
+    # Définition des triangles du cube
+    tri = np.array([[0,1,8], [1,8,3], [3,8,2], [2,8,0],
+                   [3,9,1], [1,9,5], [5,9,7], [7,9,3],
+                   [4,10,5], [5,10,7], [7,10,6], [6,10,4],
+                   [0,11,4], [4,11,6], [6,11,2], [2,11,0],
+                   [2,12,6], [6,12,7], [7,12,3], [3,12,2],
+                   [0,13,4], [4,13,5], [5,13,1], [1,13,0]])
+
+    return x, y, Z, tri
+
+
 
 def get_butterfly(s, tri):
     l0 = np.array(s)
@@ -75,15 +96,21 @@ def get_butterfly(s, tri):
     l2_down = l2_down[np.isin(l2_down, l01, invert = True)]
 
     c20 = [np.any(np.isin(e, l0)) and np.any(np.isin(e, l1[0])) for e in tri]
-    c21 = [np.any(np.isin(e, l0)) and np.any(np.isin(e, l1[1])) for e in tri]
     l20 = tri[c20]
-    l21 = tri[c21]
     l20 = l20[np.isin(l20, l01[0], invert = True)]
-    l21 = l21[np.isin(l21, l01[1], invert = True)]
-    l2 = np.append(l20, l21)
-    if len(l2) <= 4:
-        print(l2)
-        print(len(l0), len(l1), len(l2))
+
+    if len(l1) > 1:
+        c21 = [np.any(np.isin(e, l0)) and np.any(np.isin(e, l1[1])) for e in tri]
+        l21 = tri[c21]
+        l21 = l21[np.isin(l21, l01[1], invert = True)]
+        l2 = np.append(l20, l21)
+    else :
+        l2 = l20
+    
+        
+    # if len(l2) <= 4:
+    #     print(l2)
+    #     print(len(l0), len(l1), len(l2))
 
     return l0, l1, l2, l2_up, l2_down
 
@@ -149,6 +176,8 @@ def split_triangle(ti, w, x, y, z, tri, refTri):
 
     return x, y, z, tri
 
+
+
 def fly_butterfly(x, y, z, tri, iteration_number):
     for i in range(iteration_number):
         tempTri = np.copy(tri)
@@ -160,13 +189,28 @@ def fly_butterfly(x, y, z, tri, iteration_number):
 
 if __name__ == '__main__':
     ax = plt.figure().add_subplot(projection='3d')
+    bx = plt.figure().add_subplot(projection='3d')
 
-    x, y, z, tri = init_volume()
+    # x, y, z, tri = init_volume()
+    x, y, z, tri = init_cube_OK()
+    # x, y, z, tri = init_cube_KO()
     # x, y, z, tri = init_surface(size)
-    # x, y, z, tri = init_cube()
+
+    ax.set_title("Inital")
+    ax.plot_trisurf(x, y, z, triangles = tri, linewidth=0.2, antialiased=True, cmap = cm.magma)
+    # Adding labels
+    ax.set_xlabel('X-axis', fontweight ='bold')
+    ax.set_ylabel('Y-axis', fontweight ='bold')
+    ax.set_zlabel('Z-axis', fontweight ='bold')
+
     x, y, z, tri = fly_butterfly(x, y, z, tri, 3)
 
-    ax.plot_trisurf(x, y, z, triangles = tri, linewidth=0.2, antialiased=True)
+    bx.set_title("After Buttefly")
+    bx.plot_trisurf(x, y, z, triangles = tri, linewidth=0.2, antialiased=True, cmap = cm.magma)
+    # Adding labels
+    bx.set_xlabel('X-axis', fontweight ='bold')
+    bx.set_ylabel('Y-axis', fontweight ='bold')
+    bx.set_zlabel('Z-axis', fontweight ='bold')
 
     plt.show()
 
