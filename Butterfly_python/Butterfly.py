@@ -31,6 +31,33 @@ def init_volume():
         ])
     return x, y, z, tri
 
+def init_cube():
+    # Définition des points du cube
+    points = np.array([
+        [0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [1.0, 1.0, 1.0],
+        [1.0, 0.0, 1.0]
+    ])
+
+    x =[0.0,0.0,0.0,0.0,1.0,1.0,1.0,1.0]
+    y =[0.0,1.0,1.0,0.0,0.0,1.0,1.0,0.0]
+    z =[0.0,0.0,1.0,1.0,0.0,0.0,1.0,1.0]
+# Définition des triangles du cube
+    tri = np.array([
+        [0, 1, 2], [0, 2, 3],  # Face avant
+        [4, 5, 6], [4, 6, 7],  # Face arrière
+        [0, 1, 4], [1, 4, 5],  # Côté gauche
+        [2, 3, 6], [3, 6, 7],  # Côté droit
+        [0, 3, 4], [3, 4, 7],  # Dessous
+        [1, 2, 5], [2, 5, 6]   # Dessus
+    ])
+    return x, y, z, tri
+
 
 def get_butterfly(s, tri):
     l0 = np.array(s)
@@ -47,9 +74,16 @@ def get_butterfly(s, tri):
     l2_down = tri[c2_down]
     l2_down = l2_down[np.isin(l2_down, l01, invert = True)]
 
-    c2 = [np.any(np.isin(e, l0)) and np.any(np.isin(e, l1)) for e in tri]
-    l2 = tri[c2]
-    l2 = l2[np.isin(l2, l01, invert = True)]
+    c20 = [np.any(np.isin(e, l0)) and np.any(np.isin(e, l1[0])) for e in tri]
+    c21 = [np.any(np.isin(e, l0)) and np.any(np.isin(e, l1[1])) for e in tri]
+    l20 = tri[c20]
+    l21 = tri[c21]
+    l20 = l20[np.isin(l20, l01[0], invert = True)]
+    l21 = l21[np.isin(l21, l01[1], invert = True)]
+    l2 = np.append(l20, l21)
+    if len(l2) <= 4:
+        print(l2)
+        print(len(l0), len(l1), len(l2))
 
     return l0, l1, l2, l2_up, l2_down
 
@@ -65,9 +99,9 @@ def calculate_new_point(l0, l1, l2_up, l2_down, w, x, y, z):
         ny = 0.5 * sum(np.take(y, l0)) + 4 * w * y[l1[0]] - 2 * w * np.sum(np.take(y, l2_up))
         nz = 0.5 * sum(np.take(z, l0)) + 4 * w * z[l1[0]] - 2 * w * np.sum(np.take(z, l2_up))
     elif (len(l2_up) <= 1 and len(l2_down) <= 1):
-        nx = 0.5 * sum(np.take(x, l0)) 
-        ny = 0.5 * sum(np.take(y, l0)) 
-        nz = 0.5 * sum(np.take(z, l0)) 
+        nx = 0.5 * sum(np.take(x, l0))
+        ny = 0.5 * sum(np.take(y, l0))
+        nz = 0.5 * sum(np.take(z, l0))
     else:
         nx = 0.5 * sum(np.take(x, l0)) + 2 * w * sum(np.take(x, l1)) - w * np.sum(np.take(x, l2))
         ny = 0.5 * sum(np.take(y, l0)) + 2 * w * sum(np.take(y, l1)) - w * np.sum(np.take(y, l2))
@@ -79,7 +113,7 @@ def calculate_new_point(l0, l1, l2_up, l2_down, w, x, y, z):
 def split_triangle(ti, w, x, y, z, tri, refTri):
 
     t = tri[ti]
-    nt = [[t[i]] for i in range(3)]  # coordonnées du triangle 
+    nt = [[t[i]] for i in range(3)]  # coordonnées du triangle
     nt = nt + [[]]
     for i in range(3):
         s = [t[i], t[(i + 1) % 3]]
@@ -90,7 +124,7 @@ def split_triangle(ti, w, x, y, z, tri, refTri):
         l0, l1, l2, l2_up, l2_down = get_butterfly(s, refTri) # récupération des points du butterfly
 
         # nx, ny, nz = calculate_new_point(l0, l1, l2_up, l2_down, w, x, y, z)
-    
+
         nx = 0.5 * sum(np.take(x, l0)) + 2 * w * sum(np.take(x, l1)) - w * np.sum(np.take(x, l2))
         ny = 0.5 * sum(np.take(y, l0)) + 2 * w * sum(np.take(y, l1)) - w * np.sum(np.take(y, l2))
         nz = 0.5 * sum(np.take(z, l0)) + 2 * w * sum(np.take(z, l1)) - w * np.sum(np.take(z, l2))
@@ -129,6 +163,7 @@ if __name__ == '__main__':
 
     x, y, z, tri = init_volume()
     # x, y, z, tri = init_surface(size)
+    # x, y, z, tri = init_cube()
     x, y, z, tri = fly_butterfly(x, y, z, tri, 3)
 
     ax.plot_trisurf(x, y, z, triangles = tri, linewidth=0.2, antialiased=True)
